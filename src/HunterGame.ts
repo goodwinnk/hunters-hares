@@ -13,9 +13,10 @@ module HunterGame {
         var nodes = [];
         var links = [];
 
-        var nodeMatrix = [[n][m]];
+        var nodeMatrix = [];
 
         for (var i = 0; i < n; i++) {
+            nodeMatrix.push([]);
             for (var j = 0; j < m; j++) {
                 var node = <GraphNode>{
                     x: i * 50,
@@ -23,7 +24,7 @@ module HunterGame {
                 };
 
                 nodes.push(node);
-                nodeMatrix[i][j] = node;
+                nodeMatrix[i].push(node);
             }
         }
 
