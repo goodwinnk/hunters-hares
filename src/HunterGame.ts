@@ -65,20 +65,26 @@ module HunterGame {
         private g:Graph;
 
         constructor(containerId:string) {
-            this.svg = d3.select("#" + containerId).append("svg").attr("class", "field_svg");
+            this.svg = d3.select("#" + containerId).append("svg")
+                .attr("class", "field_svg");
 
             this.svg.append('svg:g')
-                .call(d3.behavior.zoom().on("zoom", () => this.redraw()))
-                .on("dblclick.zoom", null);
-
-            this.g = createMatrix(10, 10);
+                .call(d3.behavior.zoom().on("zoom", () => this.redraw()));
 
             var width = this.svg.node().clientWidth;
             var height = this.svg.node().clientHeight;
 
+            this.svg.append('svg:rect')
+                .attr('width', width)
+                .attr('height', height)
+                .attr('fill', 'white');
+
+            this.g = createMatrix(10, 10);
+
             this.force = d3.layout.force()
                 .size([width, height])
                 .nodes(this.g.nodes)
+                .links(this.g.links)
                 .on("tick", () => this.tick());
 
             this.redraw();
@@ -94,9 +100,23 @@ module HunterGame {
                 .insert("circle", ".cursor")
                 .attr("class", "node")
                 .attr("r", 5);
+
+            var links = this.force.links();
+            var link = this.svg.selectAll(".link");
+
+            link.data(links).enter()
+                .insert("line", ".node")
+                .attr("class", "link");
         }
 
         tick() {
+            var link = this.svg.selectAll(".link");
+            link
+                .attr("x1", function(d) { return d.source.x; })
+                .attr("y1", function(d) { return d.source.y; })
+                .attr("x2", function(d) { return d.target.x; })
+                .attr("y2", function(d) { return d.target.y; });
+
             var node = this.svg.selectAll(".node");
             node.attr("transform", function (d) {
                 return "translate(" + d.x + "," + d.y + ")";
