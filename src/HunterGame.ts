@@ -68,16 +68,16 @@ module HunterGame {
             this.svg = d3.select("#" + containerId).append("svg")
                 .attr("class", "field_svg");
 
-            this.svg.append('svg:g')
-                .call(d3.behavior.zoom().on("zoom", () => this.redraw()));
-
             var width = this.svg.node().clientWidth;
             var height = this.svg.node().clientHeight;
+
+            this.svg = this.svg.append('g')
+                .call(d3.behavior.zoom().on("zoom", () => this.zoom()));
 
             this.svg.append('svg:rect')
                 .attr('width', width)
                 .attr('height', height)
-                .attr('fill', 'white');
+                .attr("class", "overlay");
 
             this.g = createMatrix(10, 10);
 
@@ -121,6 +121,10 @@ module HunterGame {
             node.attr("transform", function (d) {
                 return "translate(" + d.x + "," + d.y + ")";
             });
+        }
+
+        zoom() {
+            this.svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
         }
     }
 }
