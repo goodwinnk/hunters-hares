@@ -7,11 +7,24 @@ module HunterGame {
     interface Graph {
         nodes: GraphNode[];
         links: GraphLink[];
+
+        edges:{[index: number]: {[index:number]: Boolean}}
     }
 
     function createMatrix(n:number, m:number):Graph {
         var nodes = [];
         var links = [];
+        var edges:{[index: number]: {[index:number]: Boolean}} = {};
+
+        function addLink(link: GraphLink) {
+            if (typeof edges[link.source.id] === 'undefined') edges[link.source.id] = {};
+            if (typeof edges[link.target.id] === 'undefined') edges[link.target.id] = {};
+
+            edges[link.source.id][link.target.id] = true;
+            edges[link.target.id][link.source.id] = true;
+
+            links.push(link);
+        }
 
         var nodeMatrix = [];
 
@@ -38,7 +51,7 @@ module HunterGame {
                         target: nodeMatrix[i + 1][j]
                     };
 
-                    links.push(link);
+                    addLink(link);
                 }
 
                 // Vertical node
@@ -48,14 +61,15 @@ module HunterGame {
                         target: nodeMatrix[i][j + 1]
                     };
 
-                    links.push(link);
+                    addLink(link);
                 }
             }
         }
 
         return {
             nodes: nodes,
-            links: links
+            links: links,
+            edges: edges
         };
     }
 
@@ -64,7 +78,7 @@ module HunterGame {
 
         private force:D3.Layout.ForceLayout;
         private selectedNodes:{[index: number]: boolean} = {};
-        private possibleHairs:{[index: number]: boolean} = {};
+        private possibleHares:{[index: number]: boolean} = {};
 
         private g:Graph;
 
@@ -75,9 +89,15 @@ module HunterGame {
             var width = this.svg.node().clientWidth;
             var height = this.svg.node().clientHeight;
 
-            this.possibleHairs[0] = true;
-            this.possibleHairs[11] = true;
-            this.possibleHairs[27] = true;
+            this.possibleHares[0] = true;
+            this.possibleHares[1] = true;
+            this.possibleHares[2] = true;
+            this.possibleHares[3] = true;
+            this.possibleHares[4] = true;
+            this.possibleHares[5] = true;
+            this.possibleHares[6] = true;
+            this.possibleHares[7] = true;
+            this.possibleHares[8] = true;
 
             this.svg = this.svg.append('g')
                 .call(d3.behavior.zoom().on("zoom", () => this.zoom()));
@@ -87,7 +107,7 @@ module HunterGame {
                 .attr('height', height)
                 .attr("class", "overlay");
 
-            this.g = createMatrix(10, 10);
+            this.g = createMatrix(3, 3);
 
             this.force = d3.layout.force()
                 .size([width, height])
@@ -101,6 +121,8 @@ module HunterGame {
         }
 
         redraw() {
+            this.spreadHairs();
+
             var nodes = this.force.nodes();
             var node = this.svg.selectAll(".node, .node_selected, .node_hare").data(nodes, function(d) { return d.id });
 
@@ -110,7 +132,7 @@ module HunterGame {
                 .attr("class", (n: GraphNode) => {
                     if (this.selectedNodes[n.id]) {
                         return "node_selected";
-                    } else if (this.possibleHairs[n.id]) {
+                    } else if (this.possibleHares[n.id]) {
                         return "node_hare";
                     } else {
                         return "node";
@@ -157,6 +179,24 @@ module HunterGame {
             this.svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
         }
 
+        spreadHairs() {
+            var updatedHares:{[index: number]: boolean} = {};
+            for (var i = 0; i < this.g.nodes.length; i++) {
+                var node = this.g.nodes[i];
+                if (this.possibleHares[node.id] && !this.selectedNodes[node.id]) {
+                    var adjacentNodes = this.g.edges[node.id];
+                    for (var adjacentId in adjacentNodes) {
+                        if (adjacentNodes.hasOwnProperty(adjacentId)) {
+                            if (!this.selectedNodes[adjacentId]) {
+                                updatedHares[adjacentId] = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            this.possibleHares = updatedHares;
+        }
     }
 }
 
