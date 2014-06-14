@@ -61,8 +61,10 @@ module HunterGame {
 
     export class GameState {
         private svg:D3.Selection;
+
         private force:D3.Layout.ForceLayout;
-        private selectedNodes : {[index: number]: boolean} = {};
+        private selectedNodes:{[index: number]: boolean} = {};
+        private possibleHairs:{[index: number]: boolean} = {};
 
         private g:Graph;
 
@@ -72,6 +74,10 @@ module HunterGame {
 
             var width = this.svg.node().clientWidth;
             var height = this.svg.node().clientHeight;
+
+            this.possibleHairs[0] = true;
+            this.possibleHairs[11] = true;
+            this.possibleHairs[27] = true;
 
             this.svg = this.svg.append('g')
                 .call(d3.behavior.zoom().on("zoom", () => this.zoom()));
@@ -96,13 +102,21 @@ module HunterGame {
 
         redraw() {
             var nodes = this.force.nodes();
-            var node = this.svg.selectAll(".node, .node_selected").data(nodes, function(d) { return d.id });
+            var node = this.svg.selectAll(".node, .node_selected, .node_hare").data(nodes, function(d) { return d.id });
 
             node.enter().insert("circle", ".cursor");
 
             node
-                .attr("class", (n: GraphNode) => { return (this.selectedNodes[n.id]) ? "node_selected" : "node"; })
-                .attr("r", 5)
+                .attr("class", (n: GraphNode) => {
+                    if (this.selectedNodes[n.id]) {
+                        return "node_selected";
+                    } else if (this.possibleHairs[n.id]) {
+                        return "node_hare";
+                    } else {
+                        return "node";
+                    }
+                })
+                .attr("r", 6)
                 .on("click", (node, index) => this.onNodeClick(node));
 
             node.exit().remove();
@@ -111,7 +125,7 @@ module HunterGame {
             var link = this.svg.selectAll(".link");
 
             link.data(links).enter()
-                .insert("line", ".node")
+                .insert("line", ".node, .node_selected, .node_hare")
                 .attr("class", "link");
         }
 
@@ -123,7 +137,7 @@ module HunterGame {
                 .attr("x2", function(d) { return d.target.x; })
                 .attr("y2", function(d) { return d.target.y; });
 
-            var node = this.svg.selectAll(".node");
+            var node = this.svg.selectAll(".node, .node_selected, .node_hare");
             node.attr("transform", function (d) {
                 return "translate(" + d.x + "," + d.y + ")";
             });
