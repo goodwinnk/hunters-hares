@@ -16,13 +16,13 @@ svg {
 }
 
 .node {
-    color: #000000;
+    fill: #000000;
     cursor: crosshair;
 }
 
 .node_selected {
     fill: #ff7f0e;
-    stroke: #ff7f0e;
+    cursor: crosshair;
 }
 
 .drag_line {

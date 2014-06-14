@@ -19,6 +19,7 @@ module HunterGame {
             nodeMatrix.push([]);
             for (var j = 0; j < m; j++) {
                 var node = <GraphNode>{
+                    id: n * j + i,
                     x: i * 50,
                     y: j * 50
                 };
@@ -61,6 +62,7 @@ module HunterGame {
     export class GameState {
         private svg:D3.Selection;
         private force:D3.Layout.ForceLayout;
+        private selectedNodes : {[index: number]: boolean} = {};
 
         private g:Graph;
 
@@ -94,12 +96,16 @@ module HunterGame {
 
         redraw() {
             var nodes = this.force.nodes();
-            var node = this.svg.selectAll(".node");
+            var node = this.svg.selectAll(".node, .node_selected").data(nodes, function(d) { return d.id });
 
-            node.data(nodes).enter()
-                .insert("circle", ".cursor")
-                .attr("class", "node")
-                .attr("r", 5);
+            node.enter().insert("circle", ".cursor");
+
+            node
+                .attr("class", (n: GraphNode) => { return (this.selectedNodes[n.id]) ? "node_selected" : "node"; })
+                .attr("r", 5)
+                .on("click", (node, index) => this.onNodeClick(node));
+
+            node.exit().remove();
 
             var links = this.force.links();
             var link = this.svg.selectAll(".link");
@@ -123,9 +129,20 @@ module HunterGame {
             });
         }
 
+        onNodeClick(node: GraphNode) {
+            if (this.selectedNodes[node.id]) {
+                delete this.selectedNodes[node.id];
+            } else {
+                this.selectedNodes[node.id] = true;
+            }
+
+            this.redraw();
+        }
+
         zoom() {
             this.svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
         }
+
     }
 }
 
