@@ -1,0 +1,67 @@
+body {
+    font: 13px sans-serif;
+    position: relative;
+    width: 960px;
+    height: 500px;
+}
+
+form {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+}
+
+svg {
+    border: 2px solid #202050;
+}
+
+.node {
+    fill: #000000;
+    cursor: crosshair;
+}
+
+.node_selected {
+    fill: #ff7f0e;
+    cursor: crosshair;
+}
+
+.node_hare {
+    fill: #33bb55;
+    cursor: crosshair;
+}
+
+.drag_line {
+    stroke: #999;
+    stroke-width: 5;
+    pointer-events: none;
+}
+
+.drag_line_hidden {
+    stroke: #999;
+    stroke-width: 0;
+    pointer-events: none;
+}
+
+.link {
+    stroke: #999;
+    stroke-width: 5;
+}
+
+.link_selected {
+    stroke: #ff7f0e;
+}
+
+.editor_svg {
+    width: 960px;
+    height: 500px;
+}
+
+.field_svg {
+    width: 960px;
+    height: 500px;
+}
+
+.overlay {
+    fill: none;
+    pointer-events: all;
+}
