@@ -89,16 +89,6 @@ module HunterGame {
             var width = this.svg.node().clientWidth;
             var height = this.svg.node().clientHeight;
 
-            this.possibleHares[0] = true;
-            this.possibleHares[1] = true;
-            this.possibleHares[2] = true;
-            this.possibleHares[3] = true;
-            this.possibleHares[4] = true;
-            this.possibleHares[5] = true;
-            this.possibleHares[6] = true;
-            this.possibleHares[7] = true;
-            this.possibleHares[8] = true;
-
             this.svg = this.svg.append('g')
                 .call(d3.behavior.zoom().on("zoom", () => this.zoom()));
 
@@ -107,7 +97,11 @@ module HunterGame {
                 .attr('height', height)
                 .attr("class", "overlay");
 
-            this.g = createMatrix(3, 3);
+            this.g = createMatrix(5, 5);
+
+            for (var i=0; i<5*5; i++) {
+                this.possibleHares[i] = true;
+            }
 
             this.force = d3.layout.force()
                 .size([width, height])
