@@ -1,4 +1,5 @@
 ///<reference path="../stubs/d3.d.ts" />
+///<reference path="../libs/collections/collections.ts" />
 var HunterGame;
 (function (HunterGame) {
     function createMatrix(n, m) {
@@ -65,11 +66,39 @@ var HunterGame;
         };
     }
 
+    var Move = (function () {
+        function Move(hares, shots) {
+            this._shots = new collections.Set();
+            this._shots.union(shots);
+
+            this._hares = new collections.Set();
+            this._hares.union(hares);
+        }
+        Object.defineProperty(Move.prototype, "shots", {
+            get: function () {
+                return this._shots;
+            },
+            enumerable: true,
+            configurable: true
+        });
+
+        Object.defineProperty(Move.prototype, "hares", {
+            get: function () {
+                return this._hares;
+            },
+            enumerable: true,
+            configurable: true
+        });
+        return Move;
+    })();
+
     var GameState = (function () {
         function GameState(containerId) {
             var _this = this;
-            this.selectedNodes = {};
-            this.possibleHares = {};
+            this.history = [];
+            this.moveNumber = 1;
+            this.selectedNodes = new collections.Set();
+            this.possibleHares = new collections.Set();
             this.svg = d3.select("#" + containerId).append("svg").attr("class", "field_svg");
 
             var width = this.svg.node().clientWidth;
@@ -81,10 +110,14 @@ var HunterGame;
 
             this.svg.append('svg:rect').attr('width', width).attr('height', height).attr("class", "overlay");
 
-            this.g = createMatrix(5, 5);
+            var matrixHeight = 5;
+            var matrixWidth = 5;
 
-            for (var i = 0; i < 5 * 5; i++) {
-                this.possibleHares[i] = true;
+            this.g = createMatrix(matrixWidth, matrixHeight);
+            for (var i = 0; i < matrixHeight * matrixWidth; i++) {
+                if (i % 2 == 0) {
+                    this.possibleHares.add(i);
+                }
             }
 
             this.force = d3.layout.force().size([width, height]).nodes(this.g.nodes).links(this.g.links).on("tick", function () {
@@ -95,10 +128,57 @@ var HunterGame;
 
             this.force.start();
         }
+        GameState.prototype.finishMove = function () {
+            var move = new Move(this.possibleHares, this.selectedNodes);
+            if (this.history.length + 1 != this.moveNumber && this.moveNumber != 1) {
+                // drop following steps
+                this.history = this.history.slice(0, this.moveNumber - 1);
+            }
+
+            this.history.push(move);
+            this.moveNumber++;
+
+            this.spreadHairs();
+            this.selectedNodes.clear();
+
+            this.redraw();
+        };
+
+        GameState.prototype.previousMove = function () {
+            if (this.moveNumber == 1)
+                return;
+            this.moveNumber--;
+
+            var move = this.history[this.moveNumber - 1];
+            this.possibleHares = move.hares;
+            this.selectedNodes.clear();
+
+            this.redraw();
+        };
+
+        GameState.prototype.nextMove = function () {
+            if (this.moveNumber == this.history.length)
+                return;
+
+            this.moveNumber++;
+
+            var move = this.history[this.moveNumber - 1];
+            this.possibleHares = move.hares;
+            this.selectedNodes = move.shots;
+
+            this.redraw();
+        };
+
+        GameState.prototype.selectPreviousShots = function () {
+            if (this.moveNumber == 1)
+                return;
+
+            this.selectedNodes = this.history[this.moveNumber - 1].shots;
+            this.redraw();
+        };
+
         GameState.prototype.redraw = function () {
             var _this = this;
-            this.spreadHairs();
-
             var nodes = this.force.nodes();
             var node = this.svg.selectAll(".node, .node_selected, .node_hare").data(nodes, function (d) {
                 return d.id;
@@ -107,9 +187,9 @@ var HunterGame;
             node.enter().insert("circle", ".cursor");
 
             node.attr("class", function (n) {
-                if (_this.selectedNodes[n.id]) {
+                if (_this.selectedNodes.contains(n.id)) {
                     return "node_selected";
-                } else if (_this.possibleHares[n.id]) {
+                } else if (_this.possibleHares.contains(n.id)) {
                     return "node_hare";
                 } else {
                     return "node";
@@ -145,10 +225,10 @@ var HunterGame;
         };
 
         GameState.prototype.onNodeClick = function (node) {
-            if (this.selectedNodes[node.id]) {
-                delete this.selectedNodes[node.id];
+            if (this.selectedNodes.contains(node.id)) {
+                this.selectedNodes.remove(node.id);
             } else {
-                this.selectedNodes[node.id] = true;
+                this.selectedNodes.add(node.id);
             }
 
             this.redraw();
@@ -159,16 +239,18 @@ var HunterGame;
         };
 
         GameState.prototype.spreadHairs = function () {
-            var updatedHares = {};
+            var updatedHares = new collections.Set();
             for (var i = 0; i < this.g.nodes.length; i++) {
                 var node = this.g.nodes[i];
-                if (this.possibleHares[node.id] && !this.selectedNodes[node.id]) {
+                if (this.possibleHares.contains(node.id)) {
+                    if (this.selectedNodes.contains(node.id)) {
+                        continue;
+                    }
+
                     var adjacentNodes = this.g.edges[node.id];
                     for (var adjacentId in adjacentNodes) {
                         if (adjacentNodes.hasOwnProperty(adjacentId)) {
-                            if (!this.selectedNodes[adjacentId]) {
-                                updatedHares[adjacentId] = true;
-                            }
+                            updatedHares.add(adjacentId);
                         }
                     }
                 }

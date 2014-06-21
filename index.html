@@ -5,17 +5,55 @@
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
     <title>Hunters-hares by goodwinnk</title>
 
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
     <link rel="stylesheet" href="stylesheets/game.css"/>
+
+    <script type="text/javascript" src="//code.jquery.com/jquery-2.0.0.min.js"></script>
+    <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 </head>
 <body>
 
 <header></header>
 
+<nav class="navbar navbar-default" role="navigation">
+    <div class="container-fluid">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button id="previousMoveBtn" type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-arrow-left"></span>
+            </button>
+            <button id="shotsFromPreviousMoveBtn" type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-repeat"></span>
+            </button>
+            <button id="finishMoveBtn" type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-ok-sign"></span>
+            </button>
+            <button id="nextMoveBtn" type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-arrow-right"></span>
+            </button>
+        </div>
+    </div>
+</nav>
+
 <div id="game"></div>
-<script src="http://d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript" src="javascript/collections.js"></script>
 <script type="text/javascript" src="javascript/HunterGame.js"></script>
 <script type="text/javascript">
     var state = new HunterGame.GameState("game");
+    $('#previousMoveBtn').click(function () {
+        state.previousMove();
+    });
+    $('#shotsFromPreviousMoveBtn').click(function () {
+        state.selectPreviousShots();
+    });
+    $('#finishMoveBtn').click(function () {
+        state.finishMove();
+    });
+    $('#nextMoveBtn').click(function () {
+        state.nextMove();
+    });
+
 </script>
 
 <footer>
