@@ -1,4 +1,5 @@
 ///<reference path="../stubs/d3.d.ts" />
+///<reference path="../libs/collections/collections.ts" />
 
 import GraphNode = D3.Layout.GraphNode;
 import GraphLink = D3.Layout.GraphLink;
@@ -73,14 +74,85 @@ module HunterGame {
         };
     }
 
+    class Move {
+        private _shots:collections.Set<number>;
+        private _hares:collections.Set<number>;
+
+        get shots(): collections.Set<number> {
+            return this._shots;
+        }
+
+        get hares(): collections.Set<number> {
+            return this._hares;
+        }
+
+        constructor(hares: collections.Set<number>, shots: collections.Set<number>) {
+            this._shots = new collections.Set<number>();
+            this._shots.union(shots);
+
+            this._hares = new collections.Set<number>();
+            this._hares.union(hares);
+        }
+    }
+
     export class GameState {
         private svg:D3.Selection;
 
         private force:D3.Layout.ForceLayout;
-        private selectedNodes:{[index: number]: boolean} = {};
-        private possibleHares:{[index: number]: boolean} = {};
+
+        private history:Move[] = [];
+        private moveNumber = 1;
+
+        private selectedNodes = new collections.Set<number>();
+        private possibleHares = new collections.Set<number>();
 
         private g:Graph;
+
+        finishMove() {
+            var move = new Move(this.possibleHares, this.selectedNodes);
+            if (this.history.length + 1 != this.moveNumber && this.moveNumber != 1) {
+                // drop following steps
+                this.history = this.history.slice(0, this.moveNumber - 1);
+            }
+
+            this.history.push(move);
+            this.moveNumber++;
+
+            this.spreadHairs();
+            this.selectedNodes.clear();
+
+            this.redraw();
+        }
+
+        previousMove() {
+            if (this.moveNumber == 1) return;
+            this.moveNumber--;
+
+            var move = this.history[this.moveNumber - 1];
+            this.possibleHares = move.hares;
+            this.selectedNodes.clear();
+
+            this.redraw();
+        }
+
+        nextMove() {
+            if (this.moveNumber == this.history.length) return;
+
+            this.moveNumber++;
+
+            var move = this.history[this.moveNumber - 1];
+            this.possibleHares = move.hares;
+            this.selectedNodes = move.shots;
+
+            this.redraw();
+        }
+
+        selectPreviousShots() {
+            if (this.moveNumber == 1) return;
+
+            this.selectedNodes = this.history[this.moveNumber - 1].shots;
+            this.redraw();
+        }
 
         constructor(containerId:string) {
             this.svg = d3.select("#" + containerId).append("svg")
@@ -97,10 +169,14 @@ module HunterGame {
                 .attr('height', height)
                 .attr("class", "overlay");
 
-            this.g = createMatrix(5, 5);
+            var matrixHeight = 5;
+            var matrixWidth = 5;
 
-            for (var i=0; i<5*5; i++) {
-                this.possibleHares[i] = true;
+            this.g = createMatrix(matrixWidth, matrixHeight);
+            for (var i = 0; i < matrixHeight * matrixWidth; i++) {
+                if (i % 2 == 0) {
+                    this.possibleHares.add(i);
+                }
             }
 
             this.force = d3.layout.force()
@@ -115,8 +191,6 @@ module HunterGame {
         }
 
         redraw() {
-            this.spreadHairs();
-
             var nodes = this.force.nodes();
             var node = this.svg.selectAll(".node, .node_selected, .node_hare").data(nodes, function(d) { return d.id });
 
@@ -124,9 +198,9 @@ module HunterGame {
 
             node
                 .attr("class", (n: GraphNode) => {
-                    if (this.selectedNodes[n.id]) {
+                    if (this.selectedNodes.contains(n.id)) {
                         return "node_selected";
-                    } else if (this.possibleHares[n.id]) {
+                    } else if (this.possibleHares.contains(n.id)) {
                         return "node_hare";
                     } else {
                         return "node";
@@ -160,10 +234,10 @@ module HunterGame {
         }
 
         onNodeClick(node: GraphNode) {
-            if (this.selectedNodes[node.id]) {
-                delete this.selectedNodes[node.id];
+            if (this.selectedNodes.contains(node.id)) {
+                this.selectedNodes.remove(node.id);
             } else {
-                this.selectedNodes[node.id] = true;
+                this.selectedNodes.add(node.id);
             }
 
             this.redraw();
@@ -174,16 +248,19 @@ module HunterGame {
         }
 
         spreadHairs() {
-            var updatedHares:{[index: number]: boolean} = {};
+            var updatedHares = new collections.Set<number>();
             for (var i = 0; i < this.g.nodes.length; i++) {
                 var node = this.g.nodes[i];
-                if (this.possibleHares[node.id] && !this.selectedNodes[node.id]) {
+                if (this.possibleHares.contains(node.id)) {
+                    if (this.selectedNodes.contains(node.id)) {
+                        // Killed by the shot
+                        continue;
+                    }
+
                     var adjacentNodes = this.g.edges[node.id];
                     for (var adjacentId in adjacentNodes) {
                         if (adjacentNodes.hasOwnProperty(adjacentId)) {
-                            if (!this.selectedNodes[adjacentId]) {
-                                updatedHares[adjacentId] = true;
-                            }
+                            updatedHares.add(adjacentId);
                         }
                     }
                 }

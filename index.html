@@ -19,16 +19,16 @@
     <div class="container-fluid">
         <!-- Brand and toggle get grouped for better mobile display -->
         <div class="navbar-header">
-            <button type="button" class="btn btn-default">
+            <button id="previousMoveBtn" type="button" class="btn btn-default">
                 <span class="glyphicon glyphicon-arrow-left"></span>
             </button>
-            <button type="button" class="btn btn-default">
+            <button id="shotsFromPreviousMoveBtn" type="button" class="btn btn-default">
                 <span class="glyphicon glyphicon-repeat"></span>
             </button>
-            <button type="button" class="btn btn-default">
+            <button id="finishMoveBtn" type="button" class="btn btn-default">
                 <span class="glyphicon glyphicon-ok-sign"></span>
             </button>
-            <button type="button" class="btn btn-default">
+            <button id="nextMoveBtn" type="button" class="btn btn-default">
                 <span class="glyphicon glyphicon-arrow-right"></span>
             </button>
         </div>
@@ -37,9 +37,23 @@
 
 <div id="game"></div>
 <script type="text/javascript" src="node_modules/d3/d3.js"></script>
+<script type="text/javascript" src="libs/collections/collections.js"></script>
 <script type="text/javascript" src="src/HunterGame.js"></script>
 <script type="text/javascript">
     var state = new HunterGame.GameState("game");
+    $('#previousMoveBtn').click(function () {
+        state.previousMove();
+    });
+    $('#shotsFromPreviousMoveBtn').click(function () {
+        state.selectPreviousShots();
+    });
+    $('#finishMoveBtn').click(function () {
+        state.finishMove();
+    });
+    $('#nextMoveBtn').click(function () {
+        state.nextMove();
+    });
+
 </script>
 
 <footer>
