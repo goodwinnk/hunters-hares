@@ -1,1 +1,2 @@
-Download and extract Twitter Bootstrap v3.1.1 into bootstrap folder (http://getbootstrap.com/)
+Download and extract Twitter Bootstrap v3.1.1 into 'bootstrap' folder (http://getbootstrap.com/)
+Download jquery v2.0.0 into 'jquery' folder
